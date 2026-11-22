@@ -69,6 +69,8 @@ button.btn.red{background:var(--red-bg);border-color:var(--red);color:var(--red)
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
+// Jetons du retour Google, capturés avant que Supabase ne nettoie l'URL (pour les renvoyer à Ops HQ)
+const OAUTH_RETURN = /^#access_token=[A-Za-z0-9_\-.=&%/+]+$/.test(location.hash) ? location.hash : '';
 const SUPABASE_URL = 'https://chlmqnrvnrgeaihryreb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobG1xbnJ2bnJnZWFpaHJ5cmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNTQ1MjMsImV4cCI6MjA5ODczMDUyM30.ErgkAYc0mVv6iyEeIDtJ8kKaX6ExyNi4ribi_rvqX6s';
 const API = SUPABASE_URL + '/functions/v1/admin';
@@ -192,10 +194,20 @@ $('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.si
 (async function boot() {
   // Retour de Google : flow implicite, jetons dans le fragment d'URL
   const { data: { session } } = await sb.auth.getSession();
-  if (/access_token=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname);
+  if (/access_token=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
   if (!session) return showGate('Connectez-vous avec un compte autorisé.');
   $('#who').textContent = session.user.email;
   $('#gate').hidden = true; $('#app').hidden = false;
+  if (OAUTH_RETURN && !/[?&]hq=1/.test(location.search)) {
+    // Connexion faite dans le navigateur du Mac depuis Ops HQ (Google refuse les webviews) : on propose d'y revenir
+    const b = document.createElement('div');
+    b.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:9;background:var(--surface);border:1px solid var(--gold-border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px)';
+    b.innerHTML = '<span style="font-size:13px">Vous êtes connecté. Utilisez-vous Ops HQ ?</span>';
+    const go = document.createElement('button'); go.className = 'btn'; go.textContent = 'Ouvrir dans Ops HQ';
+    go.onclick = () => { location.href = 'opshq://helm' + OAUTH_RETURN; };
+    const x = document.createElement('button'); x.className = 'btn'; x.textContent = 'Non'; x.onclick = () => b.remove();
+    b.append(go, x); document.body.append(b);
+  }
   route();
 })();
 </script>
