@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://chlmqnrvnrgeaihryreb.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+<title>Helm Ops — Super admin</title>
+<link rel="icon" href="../icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080808;--surface:#0f0f0f;--surface2:#141414;--border:#222;--text:#ede8e0;--text2:#a09890;--text3:#585450;
+  --gold:#d9a637;--gold-bg:rgba(217,166,55,.12);--gold-border:rgba(217,166,55,.32);--red:#d9564f;--red-bg:rgba(217,86,79,.14);--green:#3fb37c;--green-bg:rgba(63,179,124,.14);--r:6px}
+@media (prefers-color-scheme: light){:root{--bg:#f5f3ef;--surface:#fff;--surface2:#f0ede8;--border:#ddd9d2;--text:#1a1814;--text2:#6b6560;--text3:#a09890;--gold:#a97f2e;--gold-bg:rgba(169,127,46,.10);--gold-border:rgba(169,127,46,.28);--red:#c23a3a;--red-bg:rgba(194,58,58,.10);--green:#2f8a5e;--green-bg:rgba(47,138,94,.10)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--text);font-size:14px;font-weight:300}
+.shell{display:flex;min-height:100vh}
+.side{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 10px;display:flex;flex-direction:column;gap:2px}
+.side h1{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold);font-weight:400;padding:0 12px 4px}
+.side p{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);padding:0 12px 18px}
+.nav{background:none;border:none;border-left:1px solid transparent;color:var(--text3);text-align:left;padding:10px 12px;font:400 12px 'Jost';letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:var(--r)}
+.nav:hover{color:var(--text2);background:var(--surface2)}.nav.on{color:var(--gold);background:var(--gold-bg);border-left-color:var(--gold-border)}
+.who{margin-top:auto;font-size:11px;color:var(--text3);padding:12px;word-break:break-all}
+.main{flex:1;padding:28px 32px;min-width:0}
+h2{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;margin-bottom:18px}
+h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);font-weight:400;margin:22px 0 10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.kpi b{display:block;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:var(--text)}
+.kpi span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px}
+.bars div{flex:1;background:var(--gold-border);border-radius:2px 2px 0 0;min-height:2px;position:relative}
+.bars div i{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;font-style:normal;color:var(--text2)}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}
+th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);font-weight:400}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface2)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--surface2);color:var(--text2)}
+.tag.ok{background:var(--green-bg);color:var(--green)}.tag.ko{background:var(--red-bg);color:var(--red)}.tag.gold{background:var(--gold-bg);color:var(--gold)}
+input{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--r);padding:8px 10px;font:inherit}
+button.btn{background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--r);padding:8px 14px;font:400 12px 'Jost';letter-spacing:.06em;cursor:pointer}
+button.btn.red{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.muted{color:var(--text3)}.err{color:var(--red);margin:12px 0}
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:16px}
+.gate h1{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:34px;color:var(--gold)}
+.dl{display:grid;grid-template-columns:180px 1fr;gap:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.dl dt{color:var(--text3);font-size:12px}
+@media (max-width:760px){.shell{flex-direction:column}.side{width:auto;flex-direction:row;flex-wrap:wrap;padding:12px}.side p,.who{display:none}.main{padding:18px 16px}.dl{grid-template-columns:1fr}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<div id="gate" class="gate" hidden>
+  <h1>Helm Ops — Super admin</h1>
+  <p id="gateMsg" class="muted">Connectez-vous avec un compte autorisé.</p>
+  <button class="btn" id="loginBtn">Se connecter avec Google</button>
+  <button class="btn" id="logoutBtn" hidden>Changer de compte</button>
+</div>
+<div id="app" class="shell" hidden>
+  <nav class="side">
+    <h1>Helm Ops</h1><p>Super admin</p>
+    <button class="nav" data-v="overview">Vue d'ensemble</button>
+    <button class="nav" data-v="accounts">Comptes</button>
+    <button class="nav" data-v="health">Santé</button>
+    <div class="who" id="who"></div>
+    <button class="nav" id="signOut">Se déconnecter</button>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://chlmqnrvnrgeaihryreb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobG1xbnJ2bnJnZWFpaHJ5cmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNTQ1MjMsImV4cCI6MjA5ODczMDUyM30.ErgkAYc0mVv6iyEeIDtJ8kKaX6ExyNi4ribi_rvqX6s';
+const API = SUPABASE_URL + '/functions/v1/admin';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', storageKey: 'helm-superadmin' } });
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const d = s => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const dt = s => s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+const eur = n => (n || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+
+async function api(path, body) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw Object.assign(new Error('auth_required'), { status: 401 });
+  const r = await fetch(API + path, {
+    method: body ? 'POST' : 'GET',
+    headers: { Authorization: 'Bearer ' + session.access_token, apikey: SUPABASE_ANON_KEY, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'HTTP ' + r.status), { status: r.status });
+  return j;
+}
+
+function subTag(a) {
+  if (a.suspended) return '<span class="tag ko">Suspendu</span>';
+  if (!a.sub) return '<span class="tag">Sans abonnement</span>';
+  if (a.sub.status === 'past_due') return '<span class="tag ko">Paiement en échec</span>';
+  if (!a.active) return '<span class="tag">Expiré</span>';
+  if (a.sub.period === 'gift') return '<span class="tag gold">Offert</span>';
+  return '<span class="tag ok">' + esc(a.sub.status === 'active' ? 'Payant' : a.sub.status) + '</span>';
+}
+
+const views = {
+  async overview() {
+    const o = await api('?view=overview');
+    const max = Math.max(1, ...o.weeks.map(w => w.n));
+    return `<h2>Vue d'ensemble</h2><div class="kpis">
+      ${[['Utilisateurs', o.users], ['Abonnés payants', o.paying], ['MRR estimé', eur(o.mrr)], ['ARR estimé', eur(o.arr)], ['Accès offerts', o.gifted], ['Paiements en échec', o.pastDue], ['Expirés', o.expired], ['Sans abonnement', o.noSub], ['Inscrits 7 j', o.signups7], ['Inscrits 30 j', o.signups30], ['Actifs 7 j', o.active7], ['Actifs 30 j', o.active30], ['Suspendus', o.suspended]]
+        .map(([k, v]) => `<div class="kpi"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}
+      </div><p class="muted" style="margin-top:8px;font-size:12px">MRR estimé au tarif actuel (9,90 €/mois), hors accès offerts.</p>
+      <h3>Inscriptions par semaine (12 semaines)</h3>
+      <div class="bars" style="margin-top:20px">${o.weeks.map(w => `<div title="Semaine du ${esc(d(w.start))}" style="height:${(w.n / max) * 100}%"><i>${w.n || ''}</i></div>`).join('')}</div>
+      <h3>À surveiller</h3>${o.watch.length ? `<table><tr><th>Compte</th><th>Raison</th></tr>${o.watch.map(w => `<tr class="click" data-id="${esc(w.id)}"><td>${esc(w.email)}</td><td>${esc(w.why)}</td></tr>`).join('')}</table>` : '<p class="muted">Rien à signaler.</p>'}`;
+  },
+  async accounts() {
+    const list = (await api('?view=accounts')).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    window._accounts = list;
+    return `<h2>Comptes <span class="muted" style="font-size:18px">(${list.length})</span></h2>
+      <div class="row"><input id="q" placeholder="Rechercher un e-mail ou un nom" style="min-width:280px"></div>
+      <table id="accTable"><tr><th>Compte</th><th>Abonnement</th><th>Échéance</th><th>Inscrit le</th><th>Dernière activité</th></tr>
+      ${list.map(a => `<tr class="click" data-id="${esc(a.id)}" data-s="${esc((a.email + ' ' + a.name).toLowerCase())}"><td>${esc(a.email)}<br><span class="muted" style="font-size:12px">${esc(a.name)} ${a.provider ? '· ' + esc(a.provider) : ''}</span></td><td>${subTag(a)}</td><td>${esc(d(a.sub?.expiresAt))}</td><td>${esc(d(a.createdAt))}</td><td>${esc(dt(a.lastActive))}</td></tr>`).join('')}</table>`;
+  },
+  async account(id) {
+    const a = await api('?view=account&id=' + encodeURIComponent(id));
+    return `<p><a href="#accounts" style="color:var(--gold)">← Comptes</a></p><h2 style="margin-top:10px">${esc(a.email)}</h2>
+      <dl class="dl"><dt>Nom</dt><dd>${esc(a.name || '—')}</dd><dt>Connexion</dt><dd>${esc(a.provider || '—')}</dd>
+      <dt>Inscrit le</dt><dd>${esc(dt(a.createdAt))}</dd><dt>Dernière connexion</dt><dd>${esc(dt(a.lastSignIn))}</dd>
+      <dt>Dernière activité</dt><dd>${esc(dt(a.lastActive))}</dd><dt>Abonnement</dt><dd>${subTag(a)} ${a.sub ? esc(a.sub.period) + ' · échéance ' + esc(d(a.sub.expiresAt)) : ''}</dd>
+      <dt>Stripe</dt><dd>${esc(a.sub?.stripeId || '—')}</dd><dt>Identifiant</dt><dd class="muted">${esc(a.id)}</dd></dl>
+      <h3>Prolonger l'accès</h3><div class="row"><input id="days" type="number" min="1" max="730" value="30" style="width:100px"> jours
+        <button class="btn" data-act="extend">Prolonger</button></div>
+      <p class="muted" style="font-size:12px">À partir de la date la plus tardive entre aujourd'hui et l'échéance actuelle. Sans abonnement, crée un accès offert.</p>
+      <h3>Suspension</h3><div class="row">${a.suspended ? '<button class="btn" data-act="reactivate">Réactiver le compte</button>' : '<button class="btn red" data-act="suspend">Suspendre le compte</button>'}</div>
+      <p class="muted" style="font-size:12px">Une suspension empêche toute connexion. Une session déjà ouverte reste valable une heure au plus.</p>
+      <h3>Historique des abonnements</h3>${a.subs.length ? `<table><tr><th>Créé le</th><th>Statut</th><th>Période</th><th>Échéance</th></tr>${a.subs.map(s => `<tr><td>${esc(d(s.created_at))}</td><td>${esc(s.status)}</td><td>${esc(s.period)}</td><td>${esc(d(s.expires_at))}</td></tr>`).join('')}</table>` : '<p class="muted">Aucun.</p>'}
+      <div id="actMsg"></div>`;
+  },
+  async health() {
+    const h = await api('?view=health');
+    return `<h2>Santé</h2><table><tr><th>Contrôle</th><th>État</th><th>Détail</th></tr>
+      ${h.checks.map(c => `<tr><td>${esc(c.name)}</td><td><span class="tag ${c.ok ? 'ok' : 'ko'}">${c.ok ? 'OK' : 'Problème'}</span></td><td>${esc(c.detail)}</td></tr>`).join('')}</table>
+      <h3>Secrets de la fonction</h3><div class="kpis">${Object.entries(h.env).map(([k, v]) => `<div class="kpi" style="padding:10px 12px"><span class="tag ${v ? 'ok' : 'ko'}">${v ? 'présent' : 'absent'}</span><div style="font-size:12px;margin-top:6px;word-break:break-all">${esc(k)}</div></div>`).join('')}</div>`;
+  },
+};
+
+async function route() {
+  const [v, id] = (location.hash.slice(1) || 'overview').split('/');
+  document.querySelectorAll('.nav[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 'account' ? 'accounts' : v)));
+  const main = $('#main');
+  main.innerHTML = '<p class="muted">Chargement…</p>';
+  try {
+    main.innerHTML = await (views[v] || views.overview)(id);
+  } catch (e) {
+    if (e.status === 401 || e.status === 403) return showGate(e.status === 403 ? 'Ce compte n’est pas autorisé à accéder au super admin.' : 'Session expirée, reconnectez-vous.', e.status === 403);
+    main.innerHTML = `<p class="err">Erreur : ${esc(e.message)}</p>`;
+  }
+}
+
+function showGate(msg, forbidden) {
+  $('#app').hidden = true; $('#gate').hidden = false;
+  $('#gateMsg').textContent = msg;
+  $('#loginBtn').hidden = !!forbidden; $('#logoutBtn').hidden = !forbidden;
+}
+
+document.addEventListener('click', async e => {
+  const nav = e.target.closest('.nav[data-v]');
+  if (nav) return void (location.hash = nav.dataset.v);
+  const tr = e.target.closest('tr.click');
+  if (tr) return void (location.hash = 'account/' + tr.dataset.id);
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    const id = location.hash.split('/')[1], action = act.dataset.act;
+    const body = { action, id };
+    if (action === 'extend') body.days = Number($('#days').value);
+    if (action === 'suspend' && !confirm('Suspendre ce compte ? La personne ne pourra plus se connecter.')) return;
+    act.disabled = true;
+    try { await api('', body); await route(); }
+    catch (err) { act.disabled = false; $('#actMsg').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+  }
+});
+document.addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#accTable tr[data-s]').forEach(r => r.hidden = !!q && !r.dataset.s.includes(q));
+});
+window.addEventListener('hashchange', () => { if (!$('#app').hidden) route(); });
+
+$('#loginBtn').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: 'select_account' } } });
+$('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.signOut(); location.hash = ''; showGate('Connectez-vous avec un compte autorisé.'); };
+
+(async function boot() {
+  // Retour de Google : flow implicite, jetons dans le fragment d'URL
+  const { data: { session } } = await sb.auth.getSession();
+  if (/access_token=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname);
+  if (!session) return showGate('Connectez-vous avec un compte autorisé.');
+  $('#who').textContent = session.user.email;
+  $('#gate').hidden = true; $('#app').hidden = false;
+  route();
+})();
+</script>
+</body>
+</html>
