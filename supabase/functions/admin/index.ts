@@ -19,7 +19,7 @@ const DAY = 86400000;
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key',
   'Cache-Control': 'no-store',
 };
 const json = (body: unknown, status = 200) =>
@@ -97,7 +97,7 @@ function overview(accounts: any[]) {
 
 async function health(sb: Sb) {
   const env: Record<string, boolean> = {};
-  for (const k of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPER_ADMIN_EMAILS', 'BREVO_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_MONTHLY', 'APP_RELAY_SECRET', 'CRON_SECRET', 'VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY'])
+  for (const k of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPER_ADMIN_EMAILS', 'ADMIN_KEY', 'BREVO_API_KEY', 'STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_ID_MONTHLY', 'APP_RELAY_SECRET', 'CRON_SECRET', 'VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY'])
     env[k] = !!Deno.env.get(k);
   const checks: any[] = [];
   const t0 = Date.now();
@@ -140,18 +140,34 @@ async function health(sb: Sb) {
   return { env, checks };
 }
 
+function safeEqual(a: string, b: string) {
+  const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
+  let d = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) d |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  return d === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  const allowed = (Deno.env.get('SUPER_ADMIN_EMAILS') || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-  if (!allowed.length) return json({ error: 'SUPER_ADMIN_EMAILS non configuré' }, 403);
-
-  const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (!token) return json({ error: 'auth_required' }, 401);
+  // 1) Clé admin (secret ADMIN_KEY, 32 caractères min.) ajoutée par l'app Mac Ops HQ ; 2) sinon session Google
+  //    d'un e-mail listé dans SUPER_ADMIN_EMAILS. Jamais de rôle en base.
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-  const { data: ud, error: authErr } = await sb.auth.getUser(token);
-  const user = ud?.user;
-  if (authErr || !user) return json({ error: 'invalid_token' }, 401);
-  if (!allowed.includes((user.email || '').toLowerCase())) return json({ error: 'forbidden' }, 403);
+  let user: { id: string; email: string };
+  const adminKey = Deno.env.get('ADMIN_KEY') || '';
+  const sentKey = req.headers.get('x-admin-key') || '';
+  if (sentKey) {
+    if (adminKey.length < 32 || !safeEqual(sentKey, adminKey)) return json({ error: 'forbidden' }, 403);
+    user = { id: '', email: 'ops-hq (clé admin)' };
+  } else {
+    const allowed = (Deno.env.get('SUPER_ADMIN_EMAILS') || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (!allowed.length) return json({ error: 'SUPER_ADMIN_EMAILS non configuré' }, 403);
+    const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+    if (!token) return json({ error: 'auth_required' }, 401);
+    const { data: ud, error: authErr } = await sb.auth.getUser(token);
+    if (authErr || !ud?.user) return json({ error: 'invalid_token' }, 401);
+    if (!allowed.includes((ud.user.email || '').toLowerCase())) return json({ error: 'forbidden' }, 403);
+    user = { id: ud.user.id, email: ud.user.email || '' };
+  }
 
   try {
     const url = new URL(req.url);

@@ -82,11 +82,11 @@ const dt = s => s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month:
 const eur = n => (n || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
 
 async function api(path, body) {
+  // Dans Ops HQ, l'app Mac ajoute elle-même la clé admin (x-admin-key) : pas besoin de session
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) throw Object.assign(new Error('auth_required'), { status: 401 });
   const r = await fetch(API + path, {
     method: body ? 'POST' : 'GET',
-    headers: { Authorization: 'Bearer ' + session.access_token, apikey: SUPABASE_ANON_KEY, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: { ...(session ? { Authorization: 'Bearer ' + session.access_token } : {}), apikey: SUPABASE_ANON_KEY, ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const j = await r.json().catch(() => ({}));
@@ -195,8 +195,12 @@ $('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.si
   // Retour de Google : flow implicite, jetons dans le fragment d'URL
   const { data: { session } } = await sb.auth.getSession();
   if (/access_token=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
-  if (!session) return showGate('Connectez-vous avec un compte autorisé.');
-  $('#who').textContent = session.user.email;
+  if (!session) {
+    // Pas de session : on tente l'accès par clé admin (Ops HQ)
+    try { await api('?view=health'); } catch (_) { return showGate('Connectez-vous avec un compte autorisé.'); }
+    $('#who').textContent = 'Ops HQ';
+    $('#signOut').hidden = true;
+  } else $('#who').textContent = session.user.email;
   $('#gate').hidden = true; $('#app').hidden = false;
   if (OAUTH_RETURN && !/[?&]hq=1/.test(location.search)) {
     // Connexion faite dans le navigateur du Mac depuis Ops HQ (Google refuse les webviews) : on propose d'y revenir
