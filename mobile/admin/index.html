@@ -193,8 +193,10 @@ $('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.si
 
 (async function boot() {
   // Retour de Google : flow implicite, jetons dans le fragment d'URL
-  const { data: { session } } = await sb.auth.getSession();
+  let { data: { session } } = await sb.auth.getSession();
   if (/access_token=|error=/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+  // Session refusée (expirée, compte non autorisé) : on l'oublie pour tenter la clé admin d'Ops HQ
+  if (session) { try { await api('?view=health'); } catch (e) { if (e.status === 401 || e.status === 403) { await sb.auth.signOut({ scope: 'local' }); session = null; } } }
   if (!session) {
     // Pas de session : on tente l'accès par clé admin (Ops HQ)
     try { await api('?view=health'); } catch (_) { return showGate('Connectez-vous avec un compte autorisé.'); }
