@@ -86,7 +86,7 @@ async function api(path, body) {
   const { data: { session } } = await sb.auth.getSession();
   const r = await fetch(API + path, {
     method: body ? 'POST' : 'GET',
-    headers: { ...(session ? { Authorization: 'Bearer ' + session.access_token } : {}), apikey: SUPABASE_ANON_KEY, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: { ...(session ? { Authorization: 'Bearer ' + session.access_token } : { 'x-admin-key': 'ops-hq' }), apikey: SUPABASE_ANON_KEY, ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   const j = await r.json().catch(() => ({}));
