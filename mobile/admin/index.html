@@ -7,86 +7,274 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://chlmqnrvnrgeaihryreb.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <title>Helm Ops — Super admin</title>
 <link rel="icon" href="../icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>
+// Même thème que l'app (clé bcp_theme, « auto » = clair en journée)
+(function () {
+  let theme = 'auto';
+  try { theme = localStorage.getItem('bcp_theme') || 'auto'; } catch (_) {}
+  if (theme === 'auto') {
+    const now = new Date(), h = now.getHours(), m = now.getMonth(), dst = m > 2 && m < 10;
+    theme = h >= (dst ? 7 : 8) && h < (dst ? 20 : 18) ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Même charte que le super admin Bar Ops */
-:root{--bg:#080808;--surface:#0f0f0f;--surface2:#141414;--border:#222;--border2:#2a2a2a;--text:#ede8e0;--text2:#a09890;--text3:#585450;
-  --gold:#d9a637;--gold-bg:rgba(217,166,55,.12);--gold-border:rgba(217,166,55,.32);--red:#d9564f;--red-bg:rgba(217,86,79,.14);--green:#3fb37c;--green-bg:rgba(63,179,124,.14);--r:5px;--rl:8px}
-@media (prefers-color-scheme: light){:root{--bg:#f5f3ef;--surface:#fff;--surface2:#f0ede8;--border:#ddd9d2;--border2:#ccc8c0;--text:#1a1814;--text2:#6b6560;--text3:#a09890;--gold:#a97f2e;--gold-bg:rgba(169,127,46,.10);--gold-border:rgba(169,127,46,.28);--red:#c23a3a;--red-bg:rgba(194,58,58,.10);--green:#2f8a5e;--green-bg:rgba(47,138,94,.10)}}
+/* Jetons identiques à app.html */
+:root{
+  --bg:#080808;--surface:#0f0f0f;--surface2:#141414;--surface3:#1c1c1c;
+  --border:#222;--border2:#2a2a2a;
+  --text:#ede8e0;--text2:#a09890;--text3:#585450;
+  --gold:#d9a637;--gold2:#eabc5c;--gold-bg:rgba(217,166,55,.12);--gold-border:rgba(217,166,55,.32);
+  --red:#d9564f;--red-bg:rgba(217,86,79,.14);
+  --green:#3fb37c;--green-bg:rgba(63,179,124,.14);
+  --blue:#4d80e0;--blue-bg:rgba(77,128,224,.14);
+  --radius:5px;--radius-lg:8px;
+  --font-display:'Jost',sans-serif;--font-body:'Jost',sans-serif;
+}
+[data-theme="light"]{
+  --bg:#f5f3ef;--surface:#fff;--surface2:#f0ede8;--surface3:#e8e4de;
+  --border:#ddd9d2;--border2:#ccc8c0;
+  --text:#1a1814;--text2:#6b6560;--text3:#a09890;
+  --gold:#a97f2e;--gold2:#c2953a;--gold-bg:rgba(169,127,46,.10);--gold-border:rgba(169,127,46,.28);
+  --red:#c23a3a;--red-bg:rgba(194,58,58,.10);
+  --green:#2f8a5e;--green-bg:rgba(47,138,94,.10);
+  --blue:#2f5aa6;--blue-bg:rgba(47,90,166,.10);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-[hidden]{display:none!important}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;font-weight:300;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-body{font-family:'Jost',sans-serif;background:var(--bg);color:var(--text);font-size:14px;font-weight:300;-webkit-font-smoothing:antialiased}
 .shell{display:flex;height:100vh;overflow:hidden}
-.side{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0 8px}
-.logo{padding:28px 12px 22px;margin:0 -8px 12px;border-bottom:1px solid var(--border);padding-left:20px}
-.side h1{font-size:15px;color:var(--gold);letter-spacing:.12em;font-weight:400;text-transform:uppercase}
-.logo-rule{width:24px;height:1px;background:var(--gold-border);margin-top:10px}
-.side p{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-top:10px;font-weight:400}
-.sec{font-size:8px;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);padding:10px 12px 5px}
-.nav{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-left:1px solid transparent;color:var(--text3);text-align:left;padding:10px 14px;margin-bottom:1px;font:400 12px 'Jost',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:var(--r);transition:.2s}
-.nav svg{width:14px;height:14px;flex-shrink:0;opacity:.5;fill:none;stroke:currentColor;stroke-width:1.2}
-.nav:hover{color:var(--text2);background:var(--surface2)}.nav.on{color:var(--gold);background:var(--gold-bg);border-left-color:var(--gold-border)}.nav.on svg{opacity:1}
-.foot{margin:auto -8px 0;padding:14px 16px;border-top:1px solid var(--border)}
-.who{font-size:10px;color:var(--text3);letter-spacing:.04em;word-break:break-all}
-.foot .nav{padding:8px 0;margin-top:6px}
-.main{flex:1;min-width:0;overflow-y:auto;padding:0 28px 40px}
-h2{font-weight:300;font-size:28px;letter-spacing:.08em;color:var(--gold);margin:0 -28px 24px;padding:16px 28px;min-height:69px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5}
-h3{display:flex;align-items:center;gap:8px;font-size:8px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin:28px 0 14px}
-h3::after{content:'';flex:1;height:1px;background:var(--border)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-.kpi{background:var(--surface);border:1px solid transparent;border-radius:var(--rl);padding:16px 20px;display:flex;flex-direction:column-reverse;gap:6px;transition:border-color .2s}
-.kpi:hover{border-color:var(--border2)}
-.kpi b{display:block;font-size:28px;font-weight:300;line-height:1.1;color:var(--gold);font-variant-numeric:tabular-nums}
-.kpi span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)}
-.bars{display:flex;align-items:flex-end;gap:6px;height:160px;background:var(--surface);border-radius:var(--rl);padding:38px 20px 20px}
-.bars div{flex:1;background:var(--gold-bg);border-top:1px solid var(--gold);border-radius:2px 2px 0 0;min-height:1px;position:relative;transition:background .2s}
-.bars div:hover{background:var(--gold-border)}
-.bars div i{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:10px;font-style:normal;color:var(--text2)}
-table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:var(--rl);overflow:hidden}
-th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;font-variant-numeric:tabular-nums}
-th{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);font-weight:400}
-tr:last-child td{border-bottom:none}
-tr.click{cursor:pointer}tr.click:hover td{background:var(--surface2)}
-.tag{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:3px;font-size:9px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;background:var(--surface2);color:var(--text2);white-space:nowrap}
-.tag::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
-.tag.ok{background:var(--green-bg);color:var(--green)}.tag.ko{background:var(--red-bg);color:var(--red)}.tag.gold{background:var(--gold-bg);color:var(--gold)}
-input{height:36px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:var(--r);padding:0 11px;font:300 12px 'Jost',sans-serif;outline:none;transition:.2s}
-input:focus{border-color:var(--gold-border)}
-button.btn{display:inline-flex;align-items:center;height:36px;background:none;border:1px solid var(--border2);color:var(--text2);border-radius:4px;padding:0 16px;font:500 10px 'Jost',sans-serif;letter-spacing:.09em;text-transform:uppercase;cursor:pointer;transition:.2s}
-button.btn:hover{border-color:var(--gold-border);color:var(--gold)}
-button.btn.red{color:var(--red);border-color:var(--red-bg)}button.btn.red:hover{border-color:var(--red)}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;font-size:12px}
-.muted{color:var(--text3)}.err{color:var(--red);margin:12px 0;font-size:12px;letter-spacing:.04em}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.logo{padding:28px 20px 22px;border-bottom:1px solid var(--border)}
+.logo h1{font-size:15px;color:var(--gold);letter-spacing:.12em;font-weight:400;text-transform:uppercase}
+.logo-rule{width:24px;height:1px;background:var(--gold-border);margin:10px 0 0}
+.logo p{font-size:8px;color:var(--text3);margin-top:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:400}
+.nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-sec{font-size:8px;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);padding:10px 12px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius);cursor:pointer;color:var(--text3);font-size:12px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;margin-bottom:1px;border:none;border-left:1px solid transparent;background:none;width:100%;font-family:inherit;text-align:left;text-decoration:none}
+.nav-item:hover{color:var(--text2);background:var(--surface2)}
+.nav-item.active{color:var(--gold);background:var(--gold-bg);border-left-color:var(--gold-border)}
+.nav-icon{width:14px;height:14px;flex-shrink:0;opacity:.5}
+.nav-item.active .nav-icon{opacity:1}
+.nb{margin-left:auto;font-size:9px;letter-spacing:.04em;color:var(--text3)}
+.nav-item.active .nb{color:var(--gold)}
+.nb.alert{color:var(--red)}
+.side-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.who{font-size:10px;color:var(--text3);letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.theme-sw{display:flex;border:1px solid var(--border2);border-radius:4px;overflow:hidden}
+.theme-sw button{flex:1;background:none;border:none;color:var(--text3);font:inherit;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:6px 0;cursor:pointer;transition:.2s}
+.theme-sw button+button{border-left:1px solid var(--border2)}
+.theme-sw button:hover{color:var(--text2)}
+.theme-sw button.on{color:var(--gold);background:var(--gold-bg)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;min-width:0;padding-bottom:40px}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:24px;position:sticky;top:0;z-index:5;background:var(--bg);min-height:69px}
+.topbar h2{font-size:28px;font-weight:300;letter-spacing:.08em;color:var(--gold);white-space:nowrap}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.stamp{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.content{padding:24px 28px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);padding:20px;margin-bottom:14px;border:1px solid transparent;transition:border-color .2s}
+.ctitle{font-size:8px;font-weight:500;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.ctitle-rule{flex:1;height:1px;background:var(--border)}
+.ctitle .cnt{color:var(--text2);letter-spacing:.08em}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{padding:16px 20px;margin:0}
+.kpi.click{cursor:pointer}.kpi.click:hover{border-color:var(--gold-border)}
+.kpi .l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.kpi .v{font-size:28px;font-weight:300;color:var(--gold);margin-top:6px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .v.red{color:var(--red)}
+.kpi .s{font-size:11px;color:var(--text3);margin-top:4px}
+.g2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metric{background:var(--surface2);border-radius:var(--radius);padding:14px;text-align:center;border:1px solid var(--border)}
+.metric .val{font-size:20px;margin-bottom:2px;font-variant-numeric:tabular-nums}
+.metric .lbl{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.14em}
+.metric .sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* ── LIGNES ── */
+.row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px}
+.row:last-child{border-bottom:none}
+.row .k{color:var(--text3);font-size:11px;letter-spacing:.02em;white-space:nowrap}
+.row .v{text-align:right;min-width:0;overflow-wrap:anywhere}
+.row.link{cursor:pointer;transition:color .15s}
+.row.link:hover .v{color:var(--gold)}
+
+/* ── TABLEAU ── */
+.tw{overflow-x:auto}
+.ptable{width:100%;border-collapse:collapse}
+.ptable th{font-size:8px;color:var(--text3);text-align:left;padding:10px 12px;text-transform:uppercase;letter-spacing:.14em;border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap;user-select:none}
+.ptable th[data-k]{cursor:pointer}.ptable th[data-k]:hover,.ptable th.sorted{color:var(--gold)}
+.ptable th .arr{display:inline-block;width:8px;margin-left:4px}
+.ptable td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;white-space:nowrap}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tbody tr.click{cursor:pointer;transition:background .15s}
+.ptable tbody tr.click:hover td{background:var(--surface2)}
+.ptable .sub{font-size:10px;color:var(--text3);margin-top:2px}
+.ptable td{font-variant-numeric:tabular-nums}
+.muted{color:var(--text3)}
+
+/* ── BADGES ── */
+.b{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:3px;color:var(--text2);background:var(--surface2);white-space:nowrap}
+.b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+.b.ok{color:var(--green);background:var(--green-bg)}
+.b.gold{color:var(--gold);background:var(--gold-bg)}
+.b.bad{color:var(--red);background:var(--red-bg)}
+.b.blue{color:var(--blue);background:var(--blue-bg)}
+.b.plain::before{display:none}
+
+/* ── FORMULAIRES & BOUTONS ── */
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select{padding:0 11px;height:36px;font-size:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--font-body);font-weight:300;outline:none;transition:.2s}
+input:focus,select:focus{border-color:var(--gold);background:var(--surface3)}
+input::placeholder{color:var(--text3)}
+select{cursor:pointer;color-scheme:dark;appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23a09890' stroke-width='1.4' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+[data-theme="light"] select{color-scheme:light}
+.search{position:relative;flex:1;min-width:220px}
+.search input{width:100%;padding-left:34px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3);pointer-events:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:1px solid var(--border2);border-radius:4px;background:none;color:var(--text2);font-family:var(--font-body);font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;cursor:pointer;transition:.2s;white-space:nowrap;text-decoration:none}
+.btn svg{width:12px;height:12px}
+.btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-bg)}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#080808;font-weight:600}
+.btn-gold:hover{background:var(--gold2);border-color:var(--gold2);color:#080808}
+.btn-danger{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+.btn-danger:hover{color:#fff;background:var(--red);border-color:var(--red)}
+.btn-sm{height:28px;padding:0 11px;font-size:9px}
+.btn:disabled{opacity:.5;cursor:default}
+.icon-btn{width:32px;height:32px;padding:0}
+.hint{font-size:11px;color:var(--text3);line-height:1.6;margin-top:10px}
+
+/* ── GRAPHIQUE ── */
+.chart{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:18px}
+.chart .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.chart .bar-v{background:var(--gold-bg);border-top:1px solid var(--gold);border-radius:2px 2px 0 0;min-height:1px;transition:background .2s}
+.chart .col:hover .bar-v{background:var(--gold-border)}
+.chart .n{position:absolute;left:0;right:0;text-align:center;font-size:10px;color:var(--text2);transform:translateY(-16px)}
+.chartx{display:flex;gap:6px;margin-top:8px}.chartx span{flex:1;min-width:0;text-align:center;font-size:8px;letter-spacing:.06em;color:var(--text3);white-space:nowrap}
+
+/* ── SANTÉ ── */
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:10px;background:var(--green);box-shadow:0 0 0 3px var(--green-bg);flex-shrink:0}
+.dot.bad{background:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
+.envgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.envgrid div{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:var(--radius);font-size:11px;letter-spacing:.02em}
+
+/* ── PANNEAU LATÉRAL ── */
+#drawer{position:fixed;inset:0;z-index:20;visibility:hidden}
+#drawer .ov{position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;transition:opacity .25s}
+#drawer .in{position:absolute;right:0;top:0;bottom:0;width:min(600px,100%);background:var(--bg);border-left:1px solid var(--border);overflow-y:auto;transform:translateX(24px);opacity:0;transition:transform .25s ease,opacity .25s ease}
+#drawer.open{visibility:visible}#drawer.open .ov{opacity:1}#drawer.open .in{transform:none;opacity:1}
+.dhead{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:20px 24px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;z-index:1}
+.dhead h3{font-size:20px;font-weight:300;letter-spacing:.04em;color:var(--gold);overflow-wrap:anywhere}
+.dhead .meta{font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:.04em;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dbody{padding:20px 24px}
+
+/* ── ÉTATS ── */
+.empty{text-align:center;padding:40px 16px;color:var(--text3);font-size:11px;letter-spacing:.04em}
+.loading{padding:60px 0;display:flex;justify-content:center}
+.spin{width:18px;height:18px;border:1px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{text-align:center;padding:60px 16px;color:var(--red);font-size:12px;letter-spacing:.04em}
+.fade{animation:fade .25s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,8px);background:var(--surface);border:1px solid var(--gold-border);color:var(--text);padding:10px 18px;border-radius:var(--radius);font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.bad{border-color:var(--red);color:var(--red)}
+
+/* ── PETITS ÉCRANS ── */
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:860px){
+  .shell{flex-direction:column;height:auto;overflow:visible}
+  .sidebar{width:auto;border-right:none;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+  .logo{display:none}
+  .nav{display:flex;gap:4px;padding:8px;overflow-x:auto}
+  .nav-sec,.side-foot{display:none}
+  .nav-item{width:auto;white-space:nowrap;font-size:10px;padding:8px 12px;border-left:none}
+  .nb{display:none}
+  .main{overflow:visible}
+  .topbar{position:static;padding:16px;min-height:0}.topbar h2{font-size:22px}
+  .content{padding:16px}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:520px){.chartx span:nth-child(even){visibility:hidden}.kpis{gap:10px}.kpi{padding:14px}.kpi .v{font-size:22px}.kpi .s{font-size:10px}.stamp{display:none}}
+</style>
+<style>
+/* Calque du super admin Bar Ops : seul l'écran de connexion est propre à Helm */
+[hidden]{display:none!important}
 .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:16px}
 .gate h1{font-weight:300;font-size:28px;letter-spacing:.08em;color:var(--gold)}
-.dl{display:grid;grid-template-columns:180px 1fr;background:var(--surface);border-radius:var(--rl);padding:6px 20px;font-size:12px}
-.dl dt,.dl dd{padding:9px 0;border-bottom:1px solid var(--border)}
-.dl dt{color:var(--text3);font-size:11px}
-.dl dt:last-of-type,.dl dd:last-of-type{border-bottom:none}
-@media (max-width:760px){.shell{flex-direction:column;height:auto;overflow:visible}.side{width:auto;flex-direction:row;flex-wrap:wrap;padding:8px}.logo,.sec,.foot{display:none}.nav{width:auto;border-left:none;font-size:10px;padding:8px 12px}.main{padding:0 16px 30px}h2{margin:0 -16px 18px;padding:16px;font-size:22px}.dl{grid-template-columns:1fr}table{display:block;overflow-x:auto}}
+.gate p{color:var(--text3);font-size:12px}
 </style>
 </head>
 <body>
 <div id="gate" class="gate" hidden>
   <h1>Helm Ops — Super admin</h1>
-  <p id="gateMsg" class="muted">Connectez-vous avec un compte autorisé.</p>
-  <button class="btn" id="loginBtn">Se connecter avec Google</button>
+  <p id="gateMsg">Connectez-vous avec un compte autorisé.</p>
+  <button class="btn btn-gold" id="loginBtn">Se connecter avec Google</button>
   <button class="btn" id="logoutBtn" hidden>Changer de compte</button>
 </div>
-<div id="app" class="shell" hidden>
-  <nav class="side">
-    <div class="logo"><h1>Helm Ops</h1><div class="logo-rule"></div><p>Super admin</p></div>
-    <div class="sec">Pilotage</div>
-    <button class="nav" data-v="overview"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="7" rx="1"/><rect x="9" y="1" width="6" height="4" rx="1"/><rect x="1" y="10" width="6" height="5" rx="1"/><rect x="9" y="7" width="6" height="8" rx="1"/></svg>Vue d'ensemble</button>
-    <button class="nav" data-v="accounts"><svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 14c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/><path d="M11 3a2.5 2.5 0 010 5M12.5 9.8c1.2.6 2 1.9 2 3.4"/></svg>Comptes</button>
-    <div class="sec">Plateforme</div>
-    <button class="nav" data-v="health"><svg viewBox="0 0 16 16"><path d="M1 8.5h3l2-5 3 9 2-4h4"/></svg>Santé</button>
-    <div class="foot"><div class="who" id="who"></div>
-    <button class="nav" id="signOut">Se déconnecter</button></div>
-  </nav>
-  <main class="main" id="main"></main>
+<div class="shell" id="app" hidden>
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>Helm Ops</h1>
+      <div class="logo-rule"></div>
+      <p>Super admin</p>
+    </div>
+    <nav class="nav">
+      <div class="nav-sec">Pilotage</div>
+      <button class="nav-item active" data-tab="overview">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="1" width="6" height="7" rx="1"/><rect x="9" y="1" width="6" height="4" rx="1"/><rect x="1" y="10" width="6" height="5" rx="1"/><rect x="9" y="7" width="6" height="8" rx="1"/></svg>
+        Vue d'ensemble<span class="nb" id="nb-overview"></span>
+      </button>
+      <button class="nav-item" data-tab="accounts">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="5" r="2.5"/><path d="M1.5 14c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/><path d="M11 3a2.5 2.5 0 010 5M12.5 9.8c1.2.6 2 1.9 2 3.4"/></svg>
+        Comptes<span class="nb" id="nb-accounts"></span>
+      </button>
+      <div class="nav-sec">Plateforme</div>
+      <button class="nav-item" data-tab="health">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 8.5h3l2-5 3 9 2-4h4"/></svg>
+        Santé<span class="nb" id="nb-health"></span>
+      </button>
+      <div class="nav-sec">Liens</div>
+      <a class="nav-item" href="../" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M9 2h5v5M14 2L7 9M12 10v3.5a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-9a.5.5 0 01.5-.5H6"/></svg>
+        Ouvrir l'app
+      </a>
+      <a class="nav-item" href="https://dashboard.stripe.com" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M1.5 6.5h13M4 10h3"/></svg>
+        Stripe
+      </a>
+      <a class="nav-item" href="https://supabase.com/dashboard/project/chlmqnrvnrgeaihryreb" target="_blank" rel="noopener">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="8" cy="3.5" rx="5.5" ry="2"/><path d="M2.5 3.5v9c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2v-9M2.5 8c0 1.1 2.5 2 5.5 2s5.5-.9 5.5-2"/></svg>
+        Supabase
+      </a>
+    </nav>
+    <div class="side-foot">
+      <div class="theme-sw" id="themeSw"><button data-t="dark">Sombre</button><button data-t="auto">Auto</button><button data-t="light">Clair</button></div>
+      <div class="who" id="who"></div>
+      <button class="btn btn-sm" id="signOut">Se déconnecter</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2 id="title">Vue d'ensemble</h2>
+      <div class="topbar-actions">
+        <span class="stamp" id="stamp"></span>
+        <button class="btn icon-btn" id="refresh" title="Actualiser"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M13.5 8a5.5 5.5 0 11-1.6-3.9M13.5 2v3h-3"/></svg></button>
+      </div>
+    </div>
+    <div class="content" id="page"><div class="loading"><div class="spin"></div></div></div>
+  </main>
 </div>
+<div id="drawer"><div class="ov"></div><div class="in" id="drawerIn"></div></div>
+<div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 // Jetons du retour Google, capturés avant que Supabase ne nettoie l'URL (pour les renvoyer à Ops HQ)
@@ -95,11 +283,8 @@ const SUPABASE_URL = 'https://chlmqnrvnrgeaihryreb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNobG1xbnJ2bnJnZWFpaHJ5cmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNTQ1MjMsImV4cCI6MjA5ODczMDUyM30.ErgkAYc0mVv6iyEeIDtJ8kKaX6ExyNi4ribi_rvqX6s';
 const API = SUPABASE_URL + '/functions/v1/admin';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit', storageKey: 'helm-superadmin' } });
-const $ = s => document.querySelector(s);
+const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const d = s => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-const dt = s => s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
-const eur = n => (n || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
 
 async function api(path, body) {
   // Dans Ops HQ, l'app Mac ajoute elle-même la clé admin (x-admin-key) : pas besoin de session
@@ -114,102 +299,241 @@ async function api(path, body) {
   return j;
 }
 
-function subTag(a) {
-  if (a.suspended) return '<span class="tag ko">Suspendu</span>';
-  if (!a.sub) return '<span class="tag">Sans abonnement</span>';
-  if (a.sub.status === 'past_due') return '<span class="tag ko">Paiement en échec</span>';
-  if (!a.active) return '<span class="tag">Expiré</span>';
-  if (a.sub.period === 'gift') return '<span class="tag gold">Offert</span>';
-  return '<span class="tag ok">' + esc(a.sub.status === 'active' ? 'Payant' : a.sub.status) + '</span>';
+
+let accounts = null, sortK = 'createdAt', sortDir = -1;
+const eur = n => (Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const d = s => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—';
+const dt = s => s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+function ago(s) {
+  if (!s) return '—';
+  const m = (Date.now() - new Date(s)) / 60000;
+  if (m < 60) return 'il y a ' + Math.max(1, Math.round(m)) + ' min';
+  if (m < 1440) return 'il y a ' + Math.round(m / 60) + ' h';
+  const j = Math.round(m / 1440);
+  return j === 1 ? 'hier' : 'il y a ' + j + ' j';
+}
+const until = s => s && new Date(s).getFullYear() > 2090 ? 'Illimitée' : d(s);
+const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+const SPIN = '<div class="loading"><div class="spin"></div></div>';
+function toast(msg, bad) {
+  const t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' bad' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = '', 2800);
+}
+function stamp() { $('stamp').textContent = 'Mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+
+// ── THÈME (même réglage que Bar Ops) ──────────
+function applyTheme(t) {
+  try { localStorage.setItem('bcp_theme', t); } catch (_) {}
+  let r = t;
+  if (t === 'auto') { const n = new Date(), h = n.getHours(), m = n.getMonth(), dst = m > 2 && m < 10; r = h >= (dst ? 7 : 8) && h < (dst ? 20 : 18) ? 'light' : 'dark'; }
+  document.documentElement.setAttribute('data-theme', r);
+  document.querySelectorAll('#themeSw button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+}
+document.querySelectorAll('#themeSw button').forEach(b => b.onclick = () => applyTheme(b.dataset.t));
+(function () { let t = 'auto'; try { t = localStorage.getItem('bcp_theme') || 'auto'; } catch (_) {} document.querySelectorAll('#themeSw button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); })();
+
+const PERIOD = { monthly: 'mensuel', yearly: 'annuel', gift: 'offert' };
+const SUBST = { active: 'actif', cancelled: 'annulé', past_due: 'impayé' };
+function subBadge(a) {
+  if (!a.sub) return '<span class="b">Aucun</span>';
+  if (a.sub.status === 'past_due') return '<span class="b bad">Impayé</span>';
+  if (!a.active) return '<span class="b bad">Expiré</span>';
+  if (a.sub.period === 'gift') return '<span class="b gold">Offert</span>';
+  return `<span class="b ok">Pro · ${a.sub.period === 'yearly' ? 'annuel' : 'mensuel'}</span>`;
+}
+const statusBadge = a => a.suspended ? '<span class="b bad">Suspendu</span>' : '<span class="b ok">Actif</span>';
+const kpi = (l, v, s, opts = {}) => `<div class="card kpi${opts.tab ? ' click' : ''}"${opts.tab ? ` data-go="${opts.tab}"` : ''}><div class="l">${l}</div><div class="v${opts.red ? ' red' : ''}">${v}</div><div class="s">${s}</div></div>`;
+const ctitle = (t, extra = '') => `<div class="ctitle">${t}<span class="ctitle-rule"></span>${extra}</div>`;
+
+// ── VUE D'ENSEMBLE ────────────────────────────
+async function viewOverview() {
+  const o = await api('?view=overview');
+  const max = Math.max(1, ...o.weeks.map(w => w.n));
+  $('nb-overview').textContent = o.watch.length || '';
+  $('nb-overview').className = 'nb' + (o.pastDue ? ' alert' : '');
+  $('page').innerHTML = `<div class="fade">
+    <div class="kpis">
+      ${kpi('Revenu mensuel', eur(o.mrr), `${eur(o.arr)} par an, au tarif actuel`)}
+      ${kpi('Abonnés payants', o.paying, o.gifted ? plural(o.gifted, 'accès offert') : 'Aucun accès offert', { tab: 'accounts' })}
+      ${kpi('Utilisateurs', o.users, `${o.noSub} sans abonnement · ${plural(o.suspended, 'suspendu')}`, { tab: 'accounts' })}
+      ${kpi('Actifs sur 7 jours', o.active7, `${o.active30} sur 30 jours`)}
+      ${kpi('Inscriptions sur 7 jours', o.signups7, `${o.signups30} sur 30 jours`)}
+      ${kpi('Impayés', o.pastDue, `${plural(o.expired, 'expiré')} · ${o.noSub} sans abonnement`, { red: o.pastDue > 0 })}
+    </div>
+    <div class="g2">
+      <div class="card">${ctitle('Inscriptions par semaine', '<span class="cnt">12 semaines</span>')}
+        <div class="chart">${o.weeks.map(w => `<div class="col" title="${w.n} inscription${w.n > 1 ? 's' : ''}"><div class="bar-v" style="height:${w.n / max * 100}%"><span class="n">${w.n || ''}</span></div></div>`).join('')}</div>
+        <div class="chartx">${o.weeks.map(w => `<span>${new Date(w.start).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</span>`).join('')}</div>
+      </div>
+      <div class="card">${ctitle('À surveiller', o.watch.length ? `<span class="cnt">${o.watch.length}</span>` : '')}
+        ${o.watch.length ? o.watch.map(w => `<div class="row link" data-open="${esc(w.id)}"><span class="v" style="text-align:left">${esc(w.email)}</span><span class="b ${/échec|xpir/.test(w.why) ? 'bad' : 'gold'}">${esc(w.why)}</span></div>`).join('') : '<div class="empty">Rien à signaler</div>'}
+      </div>
+    </div></div>`;
 }
 
-const views = {
-  async overview() {
-    const o = await api('?view=overview');
-    const max = Math.max(1, ...o.weeks.map(w => w.n));
-    return `<h2>Vue d'ensemble</h2><div class="kpis">
-      ${[['Utilisateurs', o.users], ['Abonnés payants', o.paying], ['MRR estimé', eur(o.mrr)], ['ARR estimé', eur(o.arr)], ['Accès offerts', o.gifted], ['Paiements en échec', o.pastDue], ['Expirés', o.expired], ['Sans abonnement', o.noSub], ['Inscrits 7 j', o.signups7], ['Inscrits 30 j', o.signups30], ['Actifs 7 j', o.active7], ['Actifs 30 j', o.active30], ['Suspendus', o.suspended]]
-        .map(([k, v]) => `<div class="kpi"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('')}
-      </div><p class="muted" style="margin-top:8px;font-size:12px">MRR estimé au tarif actuel (9,90 €/mois), hors accès offerts.</p>
-      <h3>Inscriptions par semaine (12 semaines)</h3>
-      <div class="bars" style="margin-top:20px">${o.weeks.map(w => `<div title="Semaine du ${esc(d(w.start))}" style="height:${(w.n / max) * 100}%"><i>${w.n || ''}</i></div>`).join('')}</div>
-      <h3>À surveiller</h3>${o.watch.length ? `<table><tr><th>Compte</th><th>Raison</th></tr>${o.watch.map(w => `<tr class="click" data-id="${esc(w.id)}"><td>${esc(w.email)}</td><td>${esc(w.why)}</td></tr>`).join('')}</table>` : '<p class="muted">Rien à signaler.</p>'}`;
-  },
-  async accounts() {
-    const list = (await api('?view=accounts')).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    window._accounts = list;
-    return `<h2>Comptes <span class="muted" style="font-size:18px">(${list.length})</span></h2>
-      <div class="row"><input id="q" placeholder="Rechercher un e-mail ou un nom" style="min-width:280px"></div>
-      <table id="accTable"><tr><th>Compte</th><th>Abonnement</th><th>Échéance</th><th>Inscrit le</th><th>Dernière activité</th></tr>
-      ${list.map(a => `<tr class="click" data-id="${esc(a.id)}" data-s="${esc((a.email + ' ' + a.name).toLowerCase())}"><td>${esc(a.email)}<br><span class="muted" style="font-size:12px">${esc(a.name)} ${a.provider ? '· ' + esc(a.provider) : ''}</span></td><td>${subTag(a)}</td><td>${esc(d(a.sub?.expiresAt))}</td><td>${esc(d(a.createdAt))}</td><td>${esc(dt(a.lastActive))}</td></tr>`).join('')}</table>`;
-  },
-  async account(id) {
-    const a = await api('?view=account&id=' + encodeURIComponent(id));
-    return `<p><a href="#accounts" style="color:var(--gold)">← Comptes</a></p><h2 style="margin-top:10px">${esc(a.email)}</h2>
-      <dl class="dl"><dt>Nom</dt><dd>${esc(a.name || '—')}</dd><dt>Connexion</dt><dd>${esc(a.provider || '—')}</dd>
-      <dt>Inscrit le</dt><dd>${esc(dt(a.createdAt))}</dd><dt>Dernière connexion</dt><dd>${esc(dt(a.lastSignIn))}</dd>
-      <dt>Dernière activité</dt><dd>${esc(dt(a.lastActive))}</dd><dt>Abonnement</dt><dd>${subTag(a)} ${a.sub ? esc(a.sub.period) + ' · échéance ' + esc(d(a.sub.expiresAt)) : ''}</dd>
-      <dt>Stripe</dt><dd>${esc(a.sub?.stripeId || '—')}</dd><dt>Identifiant</dt><dd class="muted">${esc(a.id)}</dd></dl>
-      <h3>Prolonger l'accès</h3><div class="row"><input id="days" type="number" min="1" max="730" value="30" style="width:100px"> jours
-        <button class="btn" data-act="extend">Prolonger</button></div>
-      <p class="muted" style="font-size:12px">À partir de la date la plus tardive entre aujourd'hui et l'échéance actuelle. Sans abonnement, crée un accès offert.</p>
-      <h3>Suspension</h3><div class="row">${a.suspended ? '<button class="btn" data-act="reactivate">Réactiver le compte</button>' : '<button class="btn red" data-act="suspend">Suspendre le compte</button>'}</div>
-      <p class="muted" style="font-size:12px">Une suspension empêche toute connexion. Une session déjà ouverte reste valable une heure au plus.</p>
-      <h3>Historique des abonnements</h3>${a.subs.length ? `<table><tr><th>Créé le</th><th>Statut</th><th>Période</th><th>Échéance</th></tr>${a.subs.map(s => `<tr><td>${esc(d(s.created_at))}</td><td>${esc(s.status)}</td><td>${esc(s.period)}</td><td>${esc(d(s.expires_at))}</td></tr>`).join('')}</table>` : '<p class="muted">Aucun.</p>'}
-      <div id="actMsg"></div>`;
-  },
-  async health() {
-    const h = await api('?view=health');
-    return `<h2>Santé</h2><table><tr><th>Contrôle</th><th>État</th><th>Détail</th></tr>
-      ${h.checks.map(c => `<tr><td>${esc(c.name)}</td><td><span class="tag ${c.ok ? 'ok' : 'ko'}">${c.ok ? 'OK' : 'Problème'}</span></td><td>${esc(c.detail)}</td></tr>`).join('')}</table>
-      <h3>Secrets de la fonction</h3><div class="kpis">${Object.entries(h.env).map(([k, v]) => `<div class="kpi" style="padding:10px 12px"><span class="tag ${v ? 'ok' : 'ko'}">${v ? 'présent' : 'absent'}</span><div style="font-size:12px;margin-top:6px;word-break:break-all">${esc(k)}</div></div>`).join('')}</div>`;
-  },
-};
+// ── COMPTES ───────────────────────────────────
+const COLS = [['email', 'Compte'], ['provider', 'Connexion'], ['sub', 'Abonnement'], ['expiresAt', 'Échéance'], ['status', 'Statut'], ['lastActive', 'Dernière activité'], ['createdAt', 'Inscription']];
+async function viewAccounts() {
+  if (!accounts) accounts = await api('?view=accounts');
+  $('nb-accounts').textContent = accounts.length;
+  $('page').innerHTML = `<div class="fade">
+    <div class="bar">
+      <label class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="E-mail ou nom"></label>
+      <select id="fSub"><option value="">Tous les abonnements</option><option value="paid">Payants</option><option value="gift">Offerts</option><option value="past_due">Impayés</option><option value="expired">Expirés</option><option value="none">Sans abonnement</option><option value="suspended">Suspendus</option></select>
+      <button class="btn" id="csv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M2.5 13.5h11"/></svg>Exporter</button>
+    </div>
+    <div class="card tw" style="padding:4px 8px"><table class="ptable">
+      <thead><tr>${COLS.map(([k, l]) => `<th data-k="${k}">${l}<span class="arr"></span></th>`).join('')}</tr></thead>
+      <tbody id="rows"></tbody></table></div>
+    <div class="hint" id="cnt"></div></div>`;
+  ['q', 'fSub'].forEach(id => $(id).addEventListener('input', renderRows));
+  document.querySelectorAll('th[data-k]').forEach(th => th.onclick = () => { sortDir = sortK === th.dataset.k ? -sortDir : (th.dataset.k === 'email' ? 1 : -1); sortK = th.dataset.k; renderRows(); });
+  $('csv').onclick = exportCsv;
+  $('q').focus();
+  renderRows();
+}
+function filtered() {
+  const q = $('q').value.trim().toLowerCase(), fs = $('fSub').value;
+  const val = (a, k) => k === 'sub' ? (a.sub ? a.sub.period + (a.active ? 1 : 0) : '') : k === 'expiresAt' ? a.sub?.expiresAt || '' : k === 'status' ? (a.suspended ? 1 : 0) : a[k] || '';
+  return accounts.filter(a => {
+    if (q && ![a.email, a.name].join(' ').toLowerCase().includes(q)) return false;
+    if (fs === 'paid' && !(a.active && a.sub && a.sub.period !== 'gift' && a.sub.status !== 'past_due')) return false;
+    if (fs === 'gift' && !(a.active && a.sub?.period === 'gift')) return false;
+    if (fs === 'past_due' && a.sub?.status !== 'past_due') return false;
+    if (fs === 'expired' && !(a.sub && !a.active)) return false;
+    if (fs === 'none' && a.sub) return false;
+    if (fs === 'suspended' && !a.suspended) return false;
+    return true;
+  }).sort((x, y) => String(val(x, sortK)).localeCompare(String(val(y, sortK))) * sortDir);
+}
+function renderRows() {
+  const list = filtered();
+  document.querySelectorAll('th[data-k]').forEach(th => {
+    const on = th.dataset.k === sortK;
+    th.classList.toggle('sorted', on);
+    th.querySelector('.arr').textContent = on ? (sortDir > 0 ? '↑' : '↓') : '';
+  });
+  $('rows').innerHTML = list.length ? list.map(a => `<tr class="click" data-open="${esc(a.id)}">
+    <td>${esc(a.email)}${a.name ? `<div class="sub">${esc(a.name)}</div>` : ''}</td>
+    <td>${a.provider === 'google' ? 'Google' : esc(a.provider || '—')}</td><td>${subBadge(a)}</td><td>${until(a.sub?.expiresAt)}</td>
+    <td>${statusBadge(a)}</td><td>${ago(a.lastActive)}</td><td>${d(a.createdAt)}</td></tr>`).join('')
+    : `<tr><td colspan="${COLS.length}"><div class="empty">Aucun compte ne correspond</div></td></tr>`;
+  $('cnt').textContent = list.length === accounts.length ? plural(accounts.length, 'compte') : `${list.length} sur ${plural(accounts.length, 'compte')}`;
+}
+function exportCsv() {
+  const cols = ['E-mail', 'Nom', 'Connexion', 'Suspendu', 'Période', 'État abonnement', 'Échéance', 'Dernière activité', 'Inscription'];
+  const lines = [cols.join(';')].concat(filtered().map(a => [a.email, a.name, a.provider, a.suspended ? 'oui' : 'non', a.sub?.period, a.sub?.status, a.sub?.expiresAt, a.lastActive, a.createdAt].map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(';')));
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `helm-comptes-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
 
-async function route() {
-  const [v, id] = (location.hash.slice(1) || 'overview').split('/');
-  document.querySelectorAll('.nav[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 'account' ? 'accounts' : v)));
-  const main = $('#main');
-  main.innerHTML = '<p class="muted">Chargement…</p>';
-  try {
-    main.innerHTML = await (views[v] || views.overview)(id);
-  } catch (e) {
+// ── FICHE COMPTE ──────────────────────────────
+async function openAccount(id) {
+  $('drawer').classList.add('open');
+  $('drawerIn').innerHTML = SPIN;
+  let a;
+  try { a = await api('?view=account&id=' + encodeURIComponent(id)); } catch (e) { $('drawerIn').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const stripeUrl = a.sub?.stripeId ? `https://dashboard.stripe.com/subscriptions/${encodeURIComponent(a.sub.stripeId)}` : null;
+  $('drawerIn').innerHTML = `
+    <div class="dhead">
+      <div style="min-width:0"><h3>${esc(a.name || a.email)}</h3>
+        <div class="meta">${a.name ? `<span>${esc(a.email)}</span>` : ''}${statusBadge(a)}${subBadge(a)}</div></div>
+      <button class="btn icon-btn" id="close" title="Fermer"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+    </div>
+    <div class="dbody fade">
+      <div class="card">${ctitle('Compte')}
+        <div class="row"><span class="k">Connexion</span><span class="v">${a.provider === 'google' ? 'Google' : esc(a.provider || '—')}</span></div>
+        <div class="row"><span class="k">Inscription</span><span class="v">${dt(a.createdAt)}</span></div>
+        <div class="row"><span class="k">Dernière connexion</span><span class="v">${dt(a.lastSignIn)}</span></div>
+        <div class="row"><span class="k">Dernière activité</span><span class="v">${dt(a.lastActive)}</span></div>
+        <div class="row"><span class="k">Identifiant</span><span class="v muted" style="font-size:11px">${esc(a.id)}</span></div>
+      </div>
+      <div class="card">${ctitle('Abonnement')}
+        <div class="row"><span class="k">Formule</span><span class="v">${subBadge(a)}</span></div>
+        <div class="row"><span class="k">Échéance</span><span class="v">${a.sub && new Date(a.sub.expiresAt).getFullYear() > 2090 ? 'Illimitée' : dt(a.sub?.expiresAt)}</span></div>
+        ${stripeUrl ? `<div class="row"><span class="k">Stripe</span><span class="v"><a class="btn btn-sm" href="${stripeUrl}" target="_blank" rel="noopener">Ouvrir dans Stripe</a></span></div>` : ''}
+        ${a.subs.length > 1 ? `<div class="hint">Historique : ${a.subs.map(s => `${esc(PERIOD[s.period] || s.period || '')}, ${esc(SUBST[s.status] || s.status)} (${d(s.created_at)} → ${d(s.expires_at)})`).join(' · ')}</div>` : ''}
+        <div class="bar" style="margin:16px 0 0">
+          <select id="days"><option value="7">7 jours</option><option value="14">14 jours</option><option value="30" selected>30 jours</option><option value="90">90 jours</option><option value="365">1 an</option></select>
+          <button class="btn btn-gold" id="extend">Prolonger l'accès</button>
+        </div>
+        <div class="hint">Change l'échéance dans Helm Ops seulement : rien n'est facturé ni modifié dans Stripe. Sans abonnement, crée un accès offert.</div>
+      </div>
+      <div class="card" style="border-color:var(--red-bg)">${ctitle('Zone sensible')}
+        ${a.suspended ? '<button class="btn btn-gold" id="react">Réactiver le compte</button>' : '<button class="btn btn-danger" id="susp">Suspendre le compte</button>'}
+        <div class="hint">Un compte suspendu ne peut plus se connecter. Une session déjà ouverte reste valable une heure au plus.</div>
+      </div>
+    </div>`;
+  $('close').onclick = closeDrawer;
+  $('extend').onclick = async e => {
+    const days = $('days').value, btn = e.currentTarget;
+    if (!confirm(`Prolonger l'accès de ${a.email} de ${days} jours ?`)) return;
+    btn.disabled = true;
+    try { await api('', { action: 'extend', id, days: Number(days) }); toast('Accès prolongé'); accounts = null; openAccount(id); }
+    catch (err) { toast(err.message, true); btn.disabled = false; }
+  };
+  const setStatus = async (act, btn) => {
+    if (!confirm(act === 'suspend' ? `Suspendre ${a.email} ?` : `Réactiver ${a.email} ?`)) return;
+    btn.disabled = true;
+    try { await api('', { action: act, id }); toast(act === 'suspend' ? 'Compte suspendu' : 'Compte réactivé'); accounts = null; openAccount(id); }
+    catch (err) { toast(err.message, true); btn.disabled = false; }
+  };
+  if ($('susp')) $('susp').onclick = e => setStatus('suspend', e.currentTarget);
+  if ($('react')) $('react').onclick = e => setStatus('reactivate', e.currentTarget);
+}
+function closeDrawer() {
+  if (!$('drawer').classList.contains('open')) return;
+  $('drawer').classList.remove('open');
+  if (!accounts && (current === 'accounts' || current === 'overview')) go(current);
+}
+$('drawer').querySelector('.ov').onclick = closeDrawer;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-open]');
+  if (el) { e.preventDefault(); openAccount(el.dataset.open); return; }
+  const g = e.target.closest('[data-go]');
+  if (g) go(g.dataset.go);
+});
+
+// ── SANTÉ ─────────────────────────────────────
+async function viewHealth() {
+  const h = await api('?view=health');
+  const bad = h.checks.filter(c => !c.ok).length;
+  $('nb-health').textContent = bad || '';
+  $('nb-health').className = 'nb' + (bad ? ' alert' : '');
+  const env = Object.entries(h.env), missing = env.filter(([, v]) => !v).length;
+  $('page').innerHTML = `<div class="fade">
+    <div class="card">${ctitle('Services', `<span class="cnt">${bad ? plural(bad, 'alerte') : 'Tout est normal'}</span>`)}
+      ${h.checks.map(c => `<div class="row"><span style="display:flex;align-items:center"><span class="dot ${c.ok ? '' : 'bad'}"></span>${esc(c.name)}</span><span class="v muted" style="font-size:11px">${esc(c.detail)}</span></div>`).join('')}</div>
+    <div class="card">${ctitle('Secrets de la fonction', `<span class="cnt">${missing ? plural(missing, 'absent') : 'Tous présents'}</span>`)}
+      <div class="envgrid">${env.map(([k, v]) => `<div><span>${esc(k)}</span><span class="b ${v ? 'ok' : 'bad'}">${v ? 'Présent' : 'Absent'}</span></div>`).join('')}</div></div>
+    <div class="hint">Les journaux détaillés de la fonction restent sur le tableau de bord Supabase.</div></div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────
+const views = { overview: [viewOverview, "Vue d'ensemble"], accounts: [viewAccounts, 'Comptes'], health: [viewHealth, 'Santé'] };
+let current = 'overview';
+async function go(tab) {
+  current = tab;
+  document.querySelectorAll('.nav-item[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  $('title').textContent = views[tab][1];
+  $('page').innerHTML = SPIN;
+  try { await views[tab][0](); stamp(); } catch (e) {
     if (e.status === 401 || e.status === 403) return showGate(e.status === 403 ? 'Ce compte n’est pas autorisé à accéder au super admin.' : 'Session expirée, reconnectez-vous.', e.status === 403);
-    main.innerHTML = `<p class="err">Erreur : ${esc(e.message)}</p>`;
+    $('page').innerHTML = `<div class="err">${esc(e.message)}</div>`;
   }
 }
+document.querySelectorAll('.nav-item[data-tab]').forEach(b => b.onclick = () => go(b.dataset.tab));
+$('refresh').onclick = () => { accounts = null; go(current); };
 
 function showGate(msg, forbidden) {
-  $('#app').hidden = true; $('#gate').hidden = false;
-  $('#gateMsg').textContent = msg;
-  $('#loginBtn').hidden = !!forbidden; $('#logoutBtn').hidden = !forbidden;
+  $('app').hidden = true; $('gate').hidden = false;
+  $('gateMsg').textContent = msg;
+  $('loginBtn').hidden = !!forbidden; $('logoutBtn').hidden = !forbidden;
 }
-
-document.addEventListener('click', async e => {
-  const nav = e.target.closest('.nav[data-v]');
-  if (nav) return void (location.hash = nav.dataset.v);
-  const tr = e.target.closest('tr.click');
-  if (tr) return void (location.hash = 'account/' + tr.dataset.id);
-  const act = e.target.closest('[data-act]');
-  if (act) {
-    const id = location.hash.split('/')[1], action = act.dataset.act;
-    const body = { action, id };
-    if (action === 'extend') body.days = Number($('#days').value);
-    if (action === 'suspend' && !confirm('Suspendre ce compte ? La personne ne pourra plus se connecter.')) return;
-    act.disabled = true;
-    try { await api('', body); await route(); }
-    catch (err) { act.disabled = false; $('#actMsg').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
-  }
-});
-document.addEventListener('input', e => {
-  if (e.target.id !== 'q') return;
-  const q = e.target.value.trim().toLowerCase();
-  document.querySelectorAll('#accTable tr[data-s]').forEach(r => r.hidden = !!q && !r.dataset.s.includes(q));
-});
-window.addEventListener('hashchange', () => { if (!$('#app').hidden) route(); });
-
-$('#loginBtn').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: 'select_account' } } });
-$('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.signOut(); location.hash = ''; showGate('Connectez-vous avec un compte autorisé.'); };
+$('loginBtn').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: 'select_account' } } });
+$('logoutBtn').onclick = $('signOut').onclick = async () => { await sb.auth.signOut(); showGate('Connectez-vous avec un compte autorisé.'); };
 
 (async function boot() {
   // Retour de Google : flow implicite, jetons dans le fragment d'URL
@@ -220,22 +544,23 @@ $('#logoutBtn').onclick = $('#signOut').onclick = async () => { await sb.auth.si
   if (!session) {
     // Pas de session : on tente l'accès par clé admin (Ops HQ)
     try { await api('?view=health'); } catch (_) { return showGate('Connectez-vous avec un compte autorisé.'); }
-    $('#who').textContent = 'Ops HQ';
-    $('#signOut').hidden = true;
-  } else $('#who').textContent = session.user.email;
-  $('#gate').hidden = true; $('#app').hidden = false;
+    $('who').textContent = 'Ops HQ';
+    $('signOut').hidden = true;
+  } else $('who').textContent = session.user.email;
+  $('gate').hidden = true; $('app').hidden = false;
   if (OAUTH_RETURN && !/[?&]hq=1/.test(location.search)) {
     // Connexion faite dans le navigateur du Mac depuis Ops HQ (Google refuse les webviews) : on propose d'y revenir
     const b = document.createElement('div');
-    b.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:9;background:var(--surface);border:1px solid var(--gold-border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px)';
+    b.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:30;background:var(--surface);border:1px solid var(--gold-border);border-radius:8px;padding:14px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px)';
     b.innerHTML = '<span style="font-size:13px">Vous êtes connecté. Utilisez-vous Ops HQ ?</span>';
-    const go = document.createElement('button'); go.className = 'btn'; go.textContent = 'Ouvrir dans Ops HQ';
-    go.onclick = () => { location.href = 'opshq://helm' + OAUTH_RETURN; };
-    const x = document.createElement('button'); x.className = 'btn'; x.textContent = 'Non'; x.onclick = () => b.remove();
-    b.append(go, x); document.body.append(b);
+    const g = document.createElement('button'); g.className = 'btn btn-gold btn-sm'; g.textContent = 'Ouvrir dans Ops HQ';
+    g.onclick = () => { location.href = 'opshq://helm' + OAUTH_RETURN; };
+    const x = document.createElement('button'); x.className = 'btn btn-sm'; x.textContent = 'Non'; x.onclick = () => b.remove();
+    b.append(g, x); document.body.append(b);
   }
-  route();
+  go('overview');
 })();
+
 </script>
 </body>
 </html>
