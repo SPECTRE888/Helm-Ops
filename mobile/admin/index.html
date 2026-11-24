@@ -511,6 +511,27 @@ async function viewHealth() {
     <div class="hint">Les journaux détaillés de la fonction restent sur le tableau de bord Supabase.</div></div>`;
 }
 
+// ── RAPIDITÉ ──────────────────────────────────
+// Chaque écran s'affiche tout de suite avec les dernières données reçues, puis se met à jour en arrière-plan
+// (lecture seule : toute action vide la mémoire). Les écrans courants sont préchargés après l'ouverture.
+const _apiNet = api, _mem = {}, _inflight = {};
+let _bgRender = false;
+const _fetch = q => _inflight[q] = _inflight[q] || _apiNet(q).then(d => { _mem[q] = { d, t: Date.now() }; return d; }).finally(() => { delete _inflight[q]; });
+api = async function (q, body) {
+  if (body) { Object.keys(_mem).forEach(k => delete _mem[k]); return _apiNet(q, body); }
+  const c = _mem[q];
+  if (!c) return _fetch(q);
+  if (!_bgRender && Date.now() - c.t > 15000) {
+    const before = JSON.stringify(c.d);
+    _fetch(q).then(d => {
+      if (JSON.stringify(d) === before || document.getElementById('drawer')?.classList.contains('open')) return;
+      _bgRender = true; Promise.resolve(go(current)).finally(() => { _bgRender = false; });
+    }).catch(() => {});
+  }
+  return c.d;
+};
+setTimeout(() => ['?view=overview', '?view=accounts', '?view=health'].forEach(q => _fetch(q).catch(() => {})), 1500);
+
 // ── NAVIGATION ────────────────────────────────
 const views = { overview: [viewOverview, "Vue d'ensemble"], accounts: [viewAccounts, 'Comptes'], health: [viewHealth, 'Santé'] };
 let current = 'overview';
@@ -525,7 +546,7 @@ async function go(tab) {
   }
 }
 document.querySelectorAll('.nav-item[data-tab]').forEach(b => b.onclick = () => go(b.dataset.tab));
-$('refresh').onclick = () => { accounts = null; go(current); };
+$('refresh').onclick = () => { accounts = null; Object.keys(_mem).forEach(k => delete _mem[k]); go(current); };
 
 function showGate(msg, forbidden) {
   $('app').hidden = true; $('gate').hidden = false;
